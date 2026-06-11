@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Document\UserRecord;
 use App\Message\CreateUserRecordMessage;
 use App\Repository\UserRecordRepository;
-use Doctrine\ODM\MongoDB\DocumentManager;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,8 +18,9 @@ class UserRecordController extends AbstractController
 {
     public function __construct(
         private readonly MessageBusInterface $bus,
-        private readonly DocumentManager $documentManager
-    ) {}
+    )
+    {
+    }
 
     #[Route('', name: 'create', methods: ['POST'])]
     #[OA\Post(
@@ -62,7 +62,7 @@ class UserRecordController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        if (!isset($data['firstName'], $data['lastName'], $data['phoneNumbers'])) {
+        if (!isset($data['firstName'], $data['lastName'], $data['phoneNumbers']) || !is_array($data['phoneNumbers'])) {
             return $this->json([
                 'error' => 'firstName, lastName and phoneNumbers are required'
             ], Response::HTTP_BAD_REQUEST);
@@ -93,8 +93,8 @@ class UserRecordController extends AbstractController
                 required: false,
                 schema: new OA\Schema(
                     type: 'string',
-                    enum: ['firstName', 'lastName', 'createdAt', 'country'],
-                    default: 'createdAt'
+                    default: 'createdAt',
+                    enum: ['firstName', 'lastName', 'createdAt', 'country']
                 )
             ),
             new OA\Parameter(
@@ -103,8 +103,8 @@ class UserRecordController extends AbstractController
                 required: false,
                 schema: new OA\Schema(
                     type: 'string',
-                    enum: ['asc', 'desc'],
-                    default: 'asc'
+                    default: 'asc',
+                    enum: ['asc', 'desc']
                 )
             ),
         ],
@@ -129,24 +129,21 @@ class UserRecordController extends AbstractController
             ),
         ]
     )]
-    public function list(Request $request): JsonResponse
+    public function list(Request $request, UserRecordRepository $repository): JsonResponse
     {
-        /** @var UserRecordRepository $repository */
-        $repository = $this->documentManager->getRepository(UserRecord::class);
-
-        $sortField     = $request->query->get('sort', 'createdAt');
+        $sortField = $request->query->get('sort');
         $sortDirection = $request->query->get('direction', 'asc');
 
         $records = $repository->findAllSorted($sortField, $sortDirection);
 
         $data = array_map(fn(UserRecord $record) => [
-            'id'           => $record->getId(),
-            'firstName'    => $record->getFirstName(),
-            'lastName'     => $record->getLastName(),
+            'id' => $record->getId(),
+            'firstName' => $record->getFirstName(),
+            'lastName' => $record->getLastName(),
             'phoneNumbers' => $record->getPhoneNumbers(),
-            'ipAddress'    => $record->getIpAddress(),
-            'country'      => $record->getCountry(),
-            'createdAt'    => $record->getCreatedAt()->format('Y-m-d H:i:s'),
+            'ipAddress' => $record->getIpAddress(),
+            'country' => $record->getCountry(),
+            'createdAt' => $record->getCreatedAt()->format('Y-m-d H:i:s'),
         ], $records);
 
         return $this->json($data, Response::HTTP_OK);

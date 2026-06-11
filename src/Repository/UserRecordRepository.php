@@ -10,19 +10,21 @@ use Doctrine\ODM\MongoDB\Repository\DocumentRepository;
  */
 class UserRecordRepository extends DocumentRepository
 {
-    public function findAllSorted(string $field, string $direction = 'asc'): array
+    public function findAllSorted(?string $field, string $direction = 'asc'): array
     {
         $allowedFields = ['firstName', 'lastName', 'createdAt', 'country'];
 
         if (!in_array($field, $allowedFields)) {
-            $field = 'createdAt';
+            $field = null;
         }
 
         $order = strtolower($direction) === 'desc' ? -1 : 1;
 
-        return $this->createQueryBuilder()
-            ->sort($field, $order)
-            ->getQuery()
+        $query = $this->createQueryBuilder();
+        if ($field !== null) {
+            $query->sort($field, $order);
+        }
+        return $query->getQuery()
             ->execute()
             ->toArray();
     }
