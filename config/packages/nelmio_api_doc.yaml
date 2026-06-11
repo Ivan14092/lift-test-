@@ -1,0 +1,9 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: Lift User Records API
+            description: REST API for managing user records
+            version: 1.0.0
+    areas:
+        path_patterns:
+            - ^/api(?!/doc$)

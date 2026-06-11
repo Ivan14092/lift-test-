@@ -1,0 +1,8 @@
+doctrine_mongodb:
+  connections:
+    default:
+      server: '%env(MONGODB_URL)%'
+  default_database: lift_db_test
+  document_managers:
+    default:
+      auto_mapping: true
