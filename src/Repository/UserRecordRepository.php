@@ -3,13 +3,16 @@
 namespace App\Repository;
 
 use App\Document\UserRecord;
-use Doctrine\ODM\MongoDB\Repository\DocumentRepository;
+use Doctrine\Bundle\MongoDBBundle\ManagerRegistry;
+use Doctrine\Bundle\MongoDBBundle\Repository\ServiceDocumentRepository;
 
-/**
- * @extends DocumentRepository<UserRecord>
- */
-class UserRecordRepository extends DocumentRepository
+class UserRecordRepository extends ServiceDocumentRepository
 {
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, UserRecord::class);
+    }
+
     public function findAllSorted(?string $field, string $direction = 'asc'): array
     {
         $allowedFields = ['firstName', 'lastName', 'createdAt', 'country'];

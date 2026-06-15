@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Document\UserRecord;
 use App\DTO\CreateUserRecordDto;
 use App\DTO\UserRecordListDto;
 use App\Service\UserRecordService;
@@ -14,12 +13,13 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/users', name: 'api_users_')]
 class UserRecordController extends AbstractController
 {
     public function __construct(
-        private readonly UserRecordService $userRecordService
+        private readonly UserRecordService $userRecordService, private readonly SerializerInterface $serializer
     )
     {
     }
@@ -82,18 +82,8 @@ class UserRecordController extends AbstractController
         #[MapQueryString] UserRecordListDto $dto = new UserRecordListDto()
     ): JsonResponse
     {
-        $records = $this->userRecordService->getAllSorted($dto);
-
-        $data = array_map(fn(UserRecord $record) => [
-            'id' => $record->getId(),
-            'firstName' => $record->getFirstName(),
-            'lastName' => $record->getLastName(),
-            'phoneNumbers' => $record->getPhoneNumbers(),
-            'ipAddress' => $record->getIpAddress(),
-            'country' => $record->getCountry(),
-            'createdAt' => $record->getCreatedAt()->format('Y-m-d H:i:s'),
-        ], $records);
-
-        return $this->json($data, Response::HTTP_OK);
+        return $this->json(
+            $this->serializer->serialize($this->userRecordService->getAllSorted($dto), "json" ),
+        );
     }
 }

@@ -5,16 +5,16 @@ namespace App\Service;
 use App\Document\UserRecord;
 use App\DTO\CreateUserRecordDto;
 use App\DTO\UserRecordListDto;
+use App\DTO\UserRecordResponseDto;
 use App\Message\CreateUserRecordMessage;
 use App\Repository\UserRecordRepository;
-use Doctrine\ODM\MongoDB\DocumentManager;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 class UserRecordService
 {
     public function __construct(
         private readonly MessageBusInterface $bus,
-        private readonly DocumentManager     $documentManager,
+        private readonly UserRecordRepository $repository,
     )
     {
     }
@@ -31,12 +31,18 @@ class UserRecordService
 
     public function getAllSorted(UserRecordListDto $dto): array
     {
-        /** @var UserRecordRepository $repository */
-        $repository = $this->documentManager->getRepository(UserRecord::class);
-
-        return $repository->findAllSorted(
-            $dto->getSortField(),
-            $dto->getSortDirection()
-        );
+        return array_map(
+            fn(UserRecord $record) => new UserRecordResponseDto(
+                $record->getId(),
+                $record->getFirstName(),
+                $record->getLastName(),
+                $record->getPhoneNumbers(),
+                $record->getIpAddress(),
+                $record->getCountry(),
+                $record->getCreatedAt()),
+            $this->repository->findAllSorted(
+                $dto->getSortField(),
+                $dto->getSortDirection()
+            ));
     }
 }
