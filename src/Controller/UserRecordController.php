@@ -3,13 +3,16 @@
 namespace App\Controller;
 
 use App\Document\UserRecord;
+use App\DTO\CreateUserRecordDto;
 use App\Message\CreateUserRecordMessage;
 use App\Repository\UserRecordRepository;
+use Doctrine\ODM\MongoDB\DocumentManager;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -18,6 +21,7 @@ class UserRecordController extends AbstractController
 {
     public function __construct(
         private readonly MessageBusInterface $bus,
+        private readonly DocumentManager     $documentManager
     )
     {
     }
@@ -53,27 +57,22 @@ class UserRecordController extends AbstractController
                 )
             ),
             new OA\Response(
-                response: 400,
-                description: 'Invalid input'
+                response: 422,
+                description: 'Validation failed'
             ),
         ]
     )]
-    public function create(Request $request): JsonResponse
+    public function create(
+        #[MapRequestPayload] CreateUserRecordDto $dto,
+        Request                                  $request
+    ): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-
-        if (!isset($data['firstName'], $data['lastName'], $data['phoneNumbers']) || !is_array($data['phoneNumbers'])) {
-            return $this->json([
-                'error' => 'firstName, lastName and phoneNumbers are required'
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
         $ip = $request->getClientIp() ?? '8.8.8.8';
 
         $this->bus->dispatch(new CreateUserRecordMessage(
-            $data['firstName'],
-            $data['lastName'],
-            $data['phoneNumbers'],
+            $dto->getFirstName(),
+            $dto->getLastName(),
+            $dto->getPhoneNumbers(),
             $ip
         ));
 
@@ -93,8 +92,8 @@ class UserRecordController extends AbstractController
                 required: false,
                 schema: new OA\Schema(
                     type: 'string',
-                    default: 'createdAt',
-                    enum: ['firstName', 'lastName', 'createdAt', 'country']
+                    enum: ['firstName', 'lastName', 'createdAt', 'country'],
+                    default: 'createdAt'
                 )
             ),
             new OA\Parameter(
@@ -103,8 +102,8 @@ class UserRecordController extends AbstractController
                 required: false,
                 schema: new OA\Schema(
                     type: 'string',
-                    default: 'asc',
-                    enum: ['asc', 'desc']
+                    enum: ['asc', 'desc'],
+                    default: 'asc'
                 )
             ),
         ],
@@ -129,9 +128,12 @@ class UserRecordController extends AbstractController
             ),
         ]
     )]
-    public function list(Request $request, UserRecordRepository $repository): JsonResponse
+    public function list(Request $request): JsonResponse
     {
-        $sortField = $request->query->get('sort');
+        /** @var UserRecordRepository $repository */
+        $repository = $this->documentManager->getRepository(UserRecord::class);
+
+        $sortField = $request->query->get('sort', 'createdAt');
         $sortDirection = $request->query->get('direction', 'asc');
 
         $records = $repository->findAllSorted($sortField, $sortDirection);
