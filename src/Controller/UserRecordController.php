@@ -24,7 +24,7 @@ class UserRecordController extends AbstractController
     {
     }
 
-    #[Route('', name: 'create', methods: ['POST'])]
+    #[Route('', name: 'create', defaults: ['_format' => 'json'], methods: ['POST'])]
     #[OA\Post(
         path: '/api/users',
         summary: 'Create a new user record',
@@ -62,7 +62,7 @@ class UserRecordController extends AbstractController
         ], Response::HTTP_ACCEPTED);
     }
 
-    #[Route('', name: 'list', methods: ['GET'])]
+    #[Route('', name: 'list', defaults: ['_format' => 'json'], methods: ['GET'])]
     #[OA\Get(
         path: '/api/users',
         summary: 'Get all user records with optional sorting',

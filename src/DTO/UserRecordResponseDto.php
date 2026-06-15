@@ -2,16 +2,18 @@
 
 namespace App\DTO;
 
+use DateTime;
+
 final readonly class UserRecordResponseDto
 {
     public function __construct(
         private string $id,
         private string $firstName,
         private string $lastName,
-        private string $phoneNumbers,
+        private array $phoneNumbers,
         private bool   $ipAddress,
         private bool   $country,
-        private bool   $createdAt,
+        private DateTime   $createdAt,
     )
     {
     }
@@ -31,7 +33,7 @@ final readonly class UserRecordResponseDto
         return $this->lastName;
     }
 
-    public function getPhoneNumbers(): string
+    public function getPhoneNumbers(): array
     {
         return $this->phoneNumbers;
     }
@@ -46,7 +48,7 @@ final readonly class UserRecordResponseDto
         return $this->country;
     }
 
-    public function isCreatedAt(): bool
+    public function isCreatedAt(): DateTime
     {
         return $this->createdAt;
     }
