@@ -18,10 +18,23 @@ final readonly class CreateUserRecordDto
         #[Assert\NotBlank]
         #[Assert\Type('array')]
         #[Assert\Count(min: 1)]
-        private array $phoneNumbers,
-    ) {}
+        private array  $phoneNumbers,
+    )
+    {
+    }
 
-    public function getFirstName(): string { return $this->firstName; }
-    public function getLastName(): string { return $this->lastName; }
-    public function getPhoneNumbers(): array { return $this->phoneNumbers; }
+    public function getFirstName(): string
+    {
+        return $this->firstName;
+    }
+
+    public function getLastName(): string
+    {
+        return $this->lastName;
+    }
+
+    public function getPhoneNumbers(): array
+    {
+        return $this->phoneNumbers;
+    }
 }
